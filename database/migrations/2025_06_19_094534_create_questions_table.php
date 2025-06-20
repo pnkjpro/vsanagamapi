@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('topic_id')->constrained()->onDelete('cascade');
-            $table->text('question_text');
+            $table->text('qid', 50)->unique();
+            $table->text('question_text_en')->nullable();
+            $table->text('question_text_in')->nullable();
             $table->text('explanation')->nullable();
-            $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('medium');
+            $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('medium')->index();
             $table->timestamps();
         });
     }

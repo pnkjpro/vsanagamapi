@@ -13,9 +13,12 @@ return new class extends Migration
     {
         Schema::create('subjects', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
+            $table->string('title');
+            $table->string('alias');
+            $table->string('sku');
             $table->text('description')->nullable();
+            $table->string('slug');
+            $table->enum('status', ['draft', 'published', 'archived']);
             $table->timestamps();
         });
     }

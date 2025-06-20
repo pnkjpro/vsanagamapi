@@ -13,8 +13,13 @@ return new class extends Migration
     {
         Schema::create('topics', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->unsignedBigInteger('nid');
+            $table->string('title');
+            $table->string('alias');
+            $table->string('sku');
             $table->text('description')->nullable();
+            $table->string('slug');
+            $table->enum('status', ['draft', 'published', 'archived']);
             $table->timestamps();
         });
     }
