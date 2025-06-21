@@ -7,4 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Topic extends Model
 {
     protected $fillable = ['nid', 'title', 'alias', 'sku', 'description', 'slug', 'status'];
+
+    public function questions(){
+        return $this->hasMany(Question::class);
+    }
 }

@@ -27,6 +27,17 @@ class QuestionController extends Controller
         }
         $data = $validator->validated();
 
-        return $this->successResponse($response, "Test has been created successfully!", 200);
+        DB::beginTransaction();
+        try{
+            //write you query logic here
+
+
+
+            DB::commit();
+            return $this->successResponse($result, "Test has been created successfully", 200);
+        }catch(\Exception $e){
+            DB::rollBack();
+            return $this->exceptionHandler($e, $e->getMessage(), 500);
+        }
     }
 }

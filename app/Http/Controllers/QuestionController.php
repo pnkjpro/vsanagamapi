@@ -41,29 +41,36 @@ class QuestionController extends Controller
         $data = $validator->validated();
         $nid = $data['node_id'];
         $contents = $data['contents'];
-        $topic = Topic::where('nid', $data['node_id'])->first();
-        $questions = [];
-        foreach($contents as $key => $content){
-            $question = Question::create([
-                'topic_id' => $topic->id,
-                'nid' => $nid,
-                'qid' => uniqid('q_'),
-                'question_text_en' => $content['question_text_en'],
-                'question_text_hi' => $content['question_text_hi'],
-                'explanation' => $content['explanation'],
-                'difficulty' => $content['difficulty']
-            ]);
-
-            foreach ($content['options'] as $option) {
-                Option::create([
-                    'question_id' => $question->id,
-                    'option_text' => $option['option'],
-                    'is_correct'  => $option['id'] == $content['correctAnswerId'],
+        DB::beginTransaction();
+        try{
+            $topic = Topic::where('nid', $data['node_id'])->first();
+            $questions = [];
+            foreach($contents as $key => $content){
+                $question = Question::create([
+                    'topic_id' => $topic->id,
+                    'nid' => $nid,
+                    'qid' => uniqid('q_'),
+                    'question_text_en' => $content['question_text_en'],
+                    'question_text_hi' => $content['question_text_hi'],
+                    'explanation' => $content['explanation'],
+                    'difficulty' => $content['difficulty']
                 ]);
+    
+                foreach ($content['options'] as $option) {
+                    Option::create([
+                        'question_id' => $question->id,
+                        'option_text' => $option['option'],
+                        'is_correct'  => $option['id'] == $content['correctAnswerId'],
+                    ]);
+                }
             }
+            DB::commit();
+            return $this->successResponse($contents, "Test has been created successfully!", 200);
+        } catch(\Exception $e){
+            DB::rollBack();
+            return $this->exceptionHandler($e, $e->getMessage(), 500);
         }
     
-        return $this->successResponse($contents, "Test has been created successfully!", 200);
     }
 
     public function createTopic(Request $request)
@@ -86,6 +93,20 @@ class QuestionController extends Controller
         $topic = Topic::create($data);
 
         return $this->successResponse($topic, "Topic has been created successfully!", 200);
+    }
+
+    public function getMockByNid(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'nid' => 'required|exists:topics,nid'
+        ]);
+        if($validator->fails()){
+            return $this->errorResponse([], $validator->errors()->first(), 422);
+        }
+        $data = $validator->validated();
+        $topic = Topic::with('questions.options')->where('nid', $data['nid'])->get();
+
+        return $this->successResponse($topic, "Topic has been fetched successfully!", 200);
     }
 
     
