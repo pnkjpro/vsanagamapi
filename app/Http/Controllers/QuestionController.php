@@ -24,28 +24,52 @@ class QuestionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'node_id'                     => 'required|integer|exists:topics,nid',
-            'lang'                        => 'required|in:english,hindi',
-            'explanation'                 => 'nullable|string',
-            'difficulty'                  => 'required|in:easy,medium,hard',
 
             'contents'                    => 'required|array|min:1',
-            'contents.*.question'         => 'required|string',
+            'contents.*.question_text_en' => 'required|string',
+            'contents.*.question_text_hi' => 'required|string',
             'contents.*.options'          => 'required|array|min:2',
             'contents.*.options.*.id'     => 'required|integer',
             'contents.*.options.*.option' => 'required|string',
             'contents.*.correctAnswerId'  => 'required|integer',
+            'contents.*.explanation'      => 'nullable|string',
+            'contents.*.difficulty'       => 'required|in:easy,medium,hard'
         ]);
         if($validator->fails()){
             return $this->errorResponse([], $validator->errors()->first(), 422);
         }
         $data = $validator->validated();
+        $nid = $data['node_id'];
+        $contents = $data['contents'];
+        $topic = Topic::where('nid', $data['node_id'])->first();
+        $questions = [];
+        foreach($contents as $key => $content){
+            $question = Question::create([
+                'topic_id' => $topic->id,
+                'nid' => $nid,
+                'qid' => uniqid('q_'),
+                'question_text_en' => $content['question_text_en'],
+                'question_text_hi' => $content['question_text_hi'],
+                'explanation' => $content['explanation'],
+                'difficulty' => $content['difficulty']
+            ]);
 
-        return $this->successResponse($response, "Test has been created successfully!", 200);
+            foreach ($content['options'] as $option) {
+                Option::create([
+                    'question_id' => $question->id,
+                    'option_text' => $option['option'],
+                    'is_correct'  => $option['id'] == $content['correctAnswerId'],
+                ]);
+            }
+        }
+    
+        return $this->successResponse($contents, "Test has been created successfully!", 200);
     }
 
     public function createTopic(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'nid' => 'required|integer',
             'title' => 'required|string|max:225',
             'alias' => 'required|string|max:50|alpha_dash',
             'description' => 'nullable',
@@ -55,8 +79,7 @@ class QuestionController extends Controller
             return $this->errorResponse([], $validator->errors()->first(), 422);
         }
         $data = $validator->validated();
-        
-        $sku = generateSku($data, 'topic', \App\Models\Topic::class);
+        $sku = generateSku($data['alias'], 'topic', \App\Models\Topic::class);
         $data['sku'] = $sku;
         $data['slug'] = Str::slug($data['title']);
 
