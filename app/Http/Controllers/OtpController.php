@@ -93,8 +93,14 @@ class OtpController extends Controller
             'is_verified' => 1,
             'is_registered' => 1
             ]);
-        
-        return $this->successResponse([], 'OTP verified successfully!', 200);
+
+        $user = User::where('email', $request->email)->first();
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return $this->successResponse([
+            'user' => $user,
+            'token' => $token
+        ], 'OTP verified successfully!', 200);
     }
 
     
