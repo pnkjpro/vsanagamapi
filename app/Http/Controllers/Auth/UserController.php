@@ -165,16 +165,7 @@ class UserController extends Controller
     }
 
     public function fetchUser(Request $request){
-        $user = Auth::user()->load([
-            'lifelines', 
-            'user_responses' => function($query) {
-                $query->select(['user_id', 'node_id', 'quiz_variant_id', 'score', 'status']);
-            }
-        ]);
-
-        // Hide user_id from responses before returning
-        $user->user_responses->makeHidden('user_id');
-        
+        $user = Auth::user();
         return response()->json([
             'user' => $user
         ]);
